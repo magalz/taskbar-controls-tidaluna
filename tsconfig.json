@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "Preserve",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@luna/lib": ["./node_modules/luna/plugins/lib/src/index.ts"],
+      "@luna/lib.native": ["./node_modules/luna/plugins/lib.native/src/index.native.ts"],
+      "@luna/core": ["./node_modules/luna/render/src/index.ts"],
+      "@luna/ui": ["./node_modules/luna/plugins/ui/src/index.tsx"]
+    }
+  },
+  "include": ["plugins/**/*.ts", "plugins/**/*.tsx", "esbuild.config.ts"]
+}

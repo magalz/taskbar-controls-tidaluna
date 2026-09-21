@@ -1,0 +1,31 @@
+{
+  "name": "@magalz/toolbar-controls",
+  "version": "0.1.0",
+  "description": "Compact floating playback toolbar + Windows taskbar thumbnail controls for TidaLuna.",
+  "author": {
+    "name": "Magalz",
+    "url": "https://github.com/magalz"
+  },
+  "homepage": "https://github.com/magalz/taskbar-controls-tidaluna",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/magalz/taskbar-controls-tidaluna.git"
+  },
+  "main": "./src/index.ts",
+  "type": "module",
+  "scripts": {
+    "build": "rimraf ./dist && tsx ./esbuild.config.ts",
+    "watch": "rimraf ./dist && tsx ./esbuild.config.ts --watch",
+    "test": "tsx --test ./src/*.test.ts",
+    "typecheck": "tsc --noEmit -p ./tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "luna": "github:Inrixia/TidaLuna#d8cd6bc29b5edc30dd8ec28861b88d3519560126",
+    "rimraf": "^6.0.0",
+    "tsx": "^4.23.0",
+    "typescript": "^5.9.0"
+  }
+}
