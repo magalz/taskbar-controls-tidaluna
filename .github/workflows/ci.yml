@@ -46,9 +46,6 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    defaults:
-      run:
-        working-directory: plugins/toolbar-controls
     steps:
       - uses: actions/checkout@v4
 
@@ -60,12 +57,21 @@ jobs:
         with:
           node-version: 22
 
-      - run: pnpm install --no-frozen-lockfile
-      - run: pnpm build
+      - name: Install plugin deps
+        run: pnpm install --no-frozen-lockfile
+        working-directory: plugins/toolbar-controls
+
+      - name: Build plugin
+        run: pnpm build
+        working-directory: plugins/toolbar-controls
+
+      - name: Assemble Pages root (bundle + manifest + store.json)
+        run: node ./scripts/assemble-pages.mjs
+        working-directory: .
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: plugins/toolbar-controls/dist
+          path: pages
 
       - id: deployment
         uses: actions/deploy-pages@v4
