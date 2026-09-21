@@ -11,12 +11,12 @@
     "type": "git",
     "url": "https://github.com/magalz/taskbar-controls-tidaluna.git"
   },
-  "main": "./plugins/toolbar-controls/src/index.ts",
+  "main": "./src/index.ts",
   "type": "module",
   "scripts": {
     "build": "rimraf ./dist && tsx ./esbuild.config.ts",
     "watch": "rimraf ./dist && tsx ./esbuild.config.ts --watch",
-    "test": "tsx --test ./plugins/toolbar-controls/src/*.test.ts",
+    "test": "tsx --test ./src/*.test.ts",
     "typecheck": "tsc --noEmit -p ./tsconfig.json"
   },
   "devDependencies": {
