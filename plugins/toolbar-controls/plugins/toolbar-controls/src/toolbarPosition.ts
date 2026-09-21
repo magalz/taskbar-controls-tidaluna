@@ -46,10 +46,12 @@ export function createToolbarDrag(initial: ToolbarAnchor = DEFAULT_TOOLBAR_ANCHO
     },
     move(x: number, y: number, viewport: ToolbarViewport, size: ToolbarSize): ToolbarAnchor | undefined {
       if (!start) return undefined;
-      // Screen coords: +x right, +y down. Right offset shrinks as the
-      // pointer moves right; bottom offset shrinks as it moves up.
+      // Screen coords: +x right, +y down. The bar follows the pointer 1:1.
+      // Right/bottom are distances from the viewport's right/bottom edges,
+      // so moving the pointer right (+x) shrinks the right offset, and
+      // moving it down (+y) shrinks the bottom offset.
       anchor = clampToolbarPosition(
-        { right: start.right - (x - start.x), bottom: start.bottom + (y - start.y) },
+        { right: start.right - (x - start.x), bottom: start.bottom - (y - start.y) },
         viewport,
         size,
       );

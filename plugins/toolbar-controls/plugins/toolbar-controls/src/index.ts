@@ -127,10 +127,13 @@ try {
   if (stored) {
     const clamped = clampToolbarPosition(stored, { width: window.innerWidth, height: window.innerHeight }, toolbar.getBoundingClientRect());
     applyAnchor(clamped);
-    // Seed the drag state at the stored spot: synthesize a zero-delta drag
-    // from the default anchor to the stored one.
+    // Seed the drag state at the stored spot so the first drag continues
+    // from there instead of jumping back to the default anchor. The seed
+    // synthesizes the pointer delta that would have produced the stored
+    // anchor from the default: dx = default.right - clamped.right,
+    // dy = clamped.bottom - default.bottom (inverse of move math).
     drag.start(0, 0);
-    drag.move(DEFAULT_TOOLBAR_ANCHOR.right - clamped.right, clamped.bottom - DEFAULT_TOOLBAR_ANCHOR.bottom, { width: window.innerWidth, height: window.innerHeight }, toolbar.getBoundingClientRect());
+    drag.move(DEFAULT_TOOLBAR_ANCHOR.right - clamped.right, DEFAULT_TOOLBAR_ANCHOR.bottom - clamped.bottom, { width: window.innerWidth, height: window.innerHeight }, toolbar.getBoundingClientRect());
     drag.end();
   }
 } catch {
