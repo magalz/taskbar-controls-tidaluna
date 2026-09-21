@@ -8,6 +8,13 @@ import {
   type TaskbarBridge,
   type TaskbarClickId,
 } from "./taskbarBridge";
+import {
+  clampToolbarPosition,
+  createToolbarDrag,
+  DEFAULT_TOOLBAR_ANCHOR,
+  parseToolbarAnchor,
+  TOOLBAR_ANCHOR_STORAGE_KEY,
+} from "./toolbarPosition";
 
 let taskbarBridge: TaskbarBridge | undefined;
 
@@ -22,11 +29,11 @@ style.id = STYLE_ID;
 style.textContent = `
   #${TOOLBAR_ID} {
     position: fixed;
-    right: 24px;
-    bottom: 24px;
+    right: ${DEFAULT_TOOLBAR_ANCHOR.right}px;
+    bottom: ${DEFAULT_TOOLBAR_ANCHOR.bottom}px;
     z-index: 9999;
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto 1fr auto auto;
     gap: 10px;
     align-items: center;
     min-width: 430px;
@@ -65,6 +72,14 @@ style.textContent = `
   #${TOOLBAR_ID} .primary { background: rgba(82, 181, 255, .22); }
   #${TOOLBAR_ID} .primary:hover { background: rgba(82, 181, 255, .35); }
   #${TOOLBAR_ID} .restore { color: #8fd1ff; }
+  #${TOOLBAR_ID} .drag-handle {
+    width: 18px; height: 100%; min-height: 44px; padding: 0; border: 0; border-radius: 6px;
+    color: rgba(255, 255, 255, .45); background: transparent; cursor: grab;
+    font: 600 12px system-ui, sans-serif; letter-spacing: 1px; touch-action: none;
+  }
+  #${TOOLBAR_ID} .drag-handle:hover { background: rgba(255, 255, 255, .14); color: #fff; }
+  #${TOOLBAR_ID} .drag-handle:active { cursor: grabbing; }
+  #${TOOLBAR_ID}.dragging { user-select: none; opacity: .92; }
   @media (max-width: 620px) {
     #${TOOLBAR_ID} { right: 12px; bottom: 12px; min-width: 0; grid-template-columns: 1fr; max-width: calc(100vw - 24px); }
     #${TOOLBAR_ID} .controls { justify-content: center; }
@@ -93,8 +108,62 @@ toolbar.innerHTML = `
     <button data-action="next" aria-label="Next track" title="Next track">⏭</button>
   </div>
   <button class="restore" data-action="restore" aria-label="Restore TIDAL window" title="Restore TIDAL window">↗</button>
+  <button class="drag-handle" data-drag-handle aria-label="Drag to move toolbar" title="Drag to move">⋮⋮</button>
 `;
 document.body.appendChild(toolbar);
+
+// Movable toolbar: drag handle repositions the bar via the toolbarPosition
+// state machine; the anchor persists per profile in localStorage.
+const dragHandle = toolbar.querySelector<HTMLButtonElement>("[data-drag-handle]")!;
+const drag = createToolbarDrag(DEFAULT_TOOLBAR_ANCHOR);
+
+function applyAnchor(anchor: { right: number; bottom: number }) {
+  toolbar.style.right = `${anchor.right}px`;
+  toolbar.style.bottom = `${anchor.bottom}px`;
+}
+
+try {
+  const stored = parseToolbarAnchor(JSON.parse(localStorage.getItem(TOOLBAR_ANCHOR_STORAGE_KEY) ?? "null"));
+  if (stored) {
+    const clamped = clampToolbarPosition(stored, { width: window.innerWidth, height: window.innerHeight }, toolbar.getBoundingClientRect());
+    applyAnchor(clamped);
+    // Seed the drag state at the stored spot: synthesize a zero-delta drag
+    // from the default anchor to the stored one.
+    drag.start(0, 0);
+    drag.move(DEFAULT_TOOLBAR_ANCHOR.right - clamped.right, clamped.bottom - DEFAULT_TOOLBAR_ANCHOR.bottom, { width: window.innerWidth, height: window.innerHeight }, toolbar.getBoundingClientRect());
+    drag.end();
+  }
+} catch {
+  // Corrupt storage: keep the default anchor.
+}
+
+function persistAnchor() {
+  try {
+    localStorage.setItem(TOOLBAR_ANCHOR_STORAGE_KEY, JSON.stringify(drag.anchor()));
+  } catch {
+    // Storage full or blocked: position still works for this session.
+  }
+}
+
+dragHandle.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  dragHandle.setPointerCapture(event.pointerId);
+  drag.start(event.clientX, event.clientY);
+  toolbar.classList.add("dragging");
+});
+dragHandle.addEventListener("pointermove", (event) => {
+  if (!drag.dragging()) return;
+  const next = drag.move(event.clientX, event.clientY, { width: window.innerWidth, height: window.innerHeight }, toolbar.getBoundingClientRect());
+  if (next) applyAnchor(next);
+});
+const endDrag = () => {
+  if (!drag.dragging()) return;
+  drag.end();
+  toolbar.classList.remove("dragging");
+  persistAnchor();
+};
+dragHandle.addEventListener("pointerup", endDrag);
+dragHandle.addEventListener("pointercancel", endDrag);
 
 const field = <T extends HTMLElement>(name: string) => toolbar.querySelector<T>(`[data-field="${name}"]`)!;
 const titleField = field<HTMLElement>("title");
